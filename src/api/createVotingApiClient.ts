@@ -1,8 +1,12 @@
 import { isPlainRecord } from "../isPlainRecord";
 import { VotingApiRequestFailedError } from "./VotingApiRequestFailedError";
 import {
+  isGameListedOnTheBallot,
   isHonorSystemSession,
+  isVoterBallot,
+  type GameListedOnTheBallot,
   type HonorSystemSession,
+  type VoterBallot,
   type VotingApiClient,
 } from "./votingApiTypes";
 
@@ -55,6 +59,66 @@ export function createVotingApiClient(input: {
 
       return readHonorSystemSessionFromResponse(responseBody);
     },
+    fetchGamesListedOnTheBallot: async ({ sessionToken }) => {
+      const responseBody = await fetchJsonFromVotingApi({
+        fetchImplementation: input.fetchImplementation,
+        requestUrl: `${apiBaseUrl}/games`,
+        requestInit: {
+          method: "GET",
+        },
+        sessionToken,
+        unreachableHallsMessage:
+          "The games could not be summoned. The halls are unreachable.",
+      });
+
+      return readGamesListedOnTheBallotFromResponse(responseBody);
+    },
+    fetchBallotForCurrentVoter: async ({ sessionToken }) => {
+      const responseBody = await fetchJsonFromVotingApi({
+        fetchImplementation: input.fetchImplementation,
+        requestUrl: `${apiBaseUrl}/ballot`,
+        requestInit: {
+          method: "GET",
+        },
+        sessionToken,
+        unreachableHallsMessage:
+          "The ballot could not be summoned. The halls are unreachable.",
+      });
+
+      return readVoterBallotFromResponse(responseBody);
+    },
+    replaceUnlockedDraftBallotVotes: async ({ sessionToken, votes }) => {
+      const responseBody = await fetchJsonFromVotingApi({
+        fetchImplementation: input.fetchImplementation,
+        requestUrl: `${apiBaseUrl}/ballot`,
+        requestInit: {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ votes }),
+        },
+        sessionToken,
+        unreachableHallsMessage:
+          "The ballot draft could not be saved. The halls are unreachable.",
+      });
+
+      return readVoterBallotFromResponse(responseBody);
+    },
+    lockCompletedBallotForCurrentVoter: async ({ sessionToken }) => {
+      const responseBody = await fetchJsonFromVotingApi({
+        fetchImplementation: input.fetchImplementation,
+        requestUrl: `${apiBaseUrl}/ballot/lock`,
+        requestInit: {
+          method: "POST",
+        },
+        sessionToken,
+        unreachableHallsMessage:
+          "The ballot could not be sealed. The halls are unreachable.",
+      });
+
+      return readVoterBallotFromResponse(responseBody);
+    },
   };
 }
 
@@ -63,14 +127,21 @@ async function fetchJsonFromVotingApi(input: {
   requestUrl: string;
   requestInit: RequestInit;
   unreachableHallsMessage: string;
+  sessionToken?: string;
 }): Promise<unknown> {
+  const headers = new Headers(input.requestInit.headers);
+
+  if (input.sessionToken !== undefined && input.sessionToken.length > 0) {
+    headers.set("Authorization", `Bearer ${input.sessionToken}`);
+  }
+
   let response: Response;
 
   try {
-    response = await input.fetchImplementation(
-      input.requestUrl,
-      input.requestInit,
-    );
+    response = await input.fetchImplementation(input.requestUrl, {
+      ...input.requestInit,
+      headers,
+    });
   } catch {
     throw new VotingApiRequestFailedError({
       failureKind: "network",
@@ -144,6 +215,39 @@ function readHonorSystemSessionFromResponse(
     throw new VotingApiRequestFailedError({
       failureKind: "http",
       message: "The gatekeepers returned an unreadable session.",
+    });
+  }
+
+  return responseBody;
+}
+
+function readGamesListedOnTheBallotFromResponse(
+  responseBody: unknown,
+): GameListedOnTheBallot[] {
+  if (!isPlainRecord(responseBody) || !Array.isArray(responseBody.games)) {
+    throw new VotingApiRequestFailedError({
+      failureKind: "http",
+      message: "The halls returned an unreadable list of games.",
+    });
+  }
+
+  return responseBody.games.map((gameEntry) => {
+    if (!isGameListedOnTheBallot(gameEntry)) {
+      throw new VotingApiRequestFailedError({
+        failureKind: "http",
+        message: "The halls returned an unreadable list of games.",
+      });
+    }
+
+    return gameEntry;
+  });
+}
+
+function readVoterBallotFromResponse(responseBody: unknown): VoterBallot {
+  if (!isVoterBallot(responseBody)) {
+    throw new VotingApiRequestFailedError({
+      failureKind: "http",
+      message: "The halls returned an unreadable ballot.",
     });
   }
 

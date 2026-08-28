@@ -11,12 +11,14 @@ type DestinationKeepPageProperties = {
   keepKind: DestinationKeepKind;
   displayName: string;
   onReturnToNameGate: () => void;
+  onOpenHeraldryGallery?: () => void;
 };
 
 export function DestinationKeepPage({
   keepKind,
   displayName,
   onReturnToNameGate,
+  onOpenHeraldryGallery,
 }: DestinationKeepPageProperties) {
   const keepTitle = keepKind === "staff" ? "Staff keep" : "Champion's keep";
   const welcomeText =
@@ -32,6 +34,11 @@ export function DestinationKeepPage({
         <GoldButton onClick={onReturnToNameGate}>
           Return to the name gate
         </GoldButton>
+        {keepKind === "staff" && onOpenHeraldryGallery ? (
+          <GoldButton variant="secondary" onClick={onOpenHeraldryGallery}>
+            Heraldry gallery
+          </GoldButton>
+        ) : null}
       </ParchmentCard>
     </PageShell>
   );

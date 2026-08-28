@@ -4,20 +4,27 @@ Staff upload game submissions by CSV. Voters pick a name from a roster (honor sy
 
 ## Layout
 
-- Repo root — Vite React app: honor-system name gate, design-system primitives, gallery at `/gallery`
+- Repo root — Vite React app: honor-system name gate, four-category voting hall, design-system primitives. Heraldry gallery is staff-only (`/gallery`).
 - `backend/` — TypeScript Fastify + Postgres API
 - `backend/migrations/001_award_voting_schema.sql` — locked schema (tables, RESTRICT FKs, lock/vote triggers)
 
 ## Status
 
-This iteration ships the name gate (pick a roster name; optional shared staff password) and the fantasy design system. The four-category voting board, staff CSV UI, and Railway hosting are not included yet.
+This iteration ships the name gate (pick a roster name; optional shared staff password), the four-category voting hall with lock-in, and the fantasy design system. The staff CSV UI and Railway hosting are not included yet.
 
 The name gate talks to the real API:
 
 - `GET /voters` — public roster, display names only
 - `POST /sessions` — body `{ displayName, staffPassword? }`. Honor-system name pick; `isStaff` is true only when the shared staff password is present and valid for a staff name. A wrong password still opens a voter session and does not leak staff-ness.
 
-## Run the name gate
+The voting hall (after a session) talks to:
+
+- `GET /games` — submitted games still on the ballot
+- `GET /ballot` — current draft or sealed ballot
+- `PUT /ballot` — replace an unlocked draft (`{ votes: [{ category, gameId }] }`)
+- `POST /ballot/lock` — seal after all four categories are filled; 400 if incomplete, 409 if already locked
+
+## Run the name gate and voting hall
 
 ```bash
 npm install
@@ -30,7 +37,7 @@ Vite prints a local URL (default `http://localhost:5173`). The home page is the 
 cp .env.example .env
 ```
 
-The design-system gallery lives at `/gallery`.
+The Heraldry / design-system gallery is staff-only. It is not linked from the name gate, and an unauthenticated `/gallery` visit returns to the gate.
 
 ## Frontend tests
 

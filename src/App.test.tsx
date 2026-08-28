@@ -27,13 +27,19 @@ describe("App", () => {
     ).toBeInTheDocument();
     expect(screen.getByLabelText("Shared staff password")).toBeInTheDocument();
     expect(screen.queryByText("Design system gallery")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Heraldry gallery" }),
+    ).not.toBeInTheDocument();
   });
 
-  it("still serves the design-system gallery from /gallery", () => {
+  it("does not serve the design-system gallery from a public /gallery visit", async () => {
     window.history.replaceState(null, "", APP_PATHNAMES.gallery);
 
     render(<App />);
 
-    expect(screen.getByText("Design system gallery")).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: "Name the champion" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Design system gallery")).not.toBeInTheDocument();
   });
 });

@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { DesignSystemGallery } from "./DesignSystemGallery";
 
 describe("DesignSystemGallery", () => {
@@ -47,5 +47,17 @@ describe("DesignSystemGallery", () => {
     expect(
       screen.getByRole("button", { name: /Lanterns of Qeynos/ }),
     ).toHaveAttribute("aria-pressed", "false");
+  });
+
+  it("returns staff to the keep when the gallery is opened from the staff hall", async () => {
+    const user = userEvent.setup();
+    const onReturnToStaffKeep = vi.fn();
+
+    render(<DesignSystemGallery onReturnToStaffKeep={onReturnToStaffKeep} />);
+
+    await user.click(
+      screen.getByRole("button", { name: "Return to the staff keep" }),
+    );
+    expect(onReturnToStaffKeep).toHaveBeenCalledOnce();
   });
 });

@@ -2,28 +2,9 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { VotingApiRequestFailedError } from "../../api/VotingApiRequestFailedError";
-import type { VotingApiClient } from "../../api/votingApiTypes";
+import { createVotingApiClientMock } from "../../test/createVotingApiClientMock";
 import { NameGatePage } from "./NameGatePage";
 import nameGatePageSource from "./NameGatePage.tsx?raw";
-
-function createVotingApiClientMock(
-  overrides: Partial<VotingApiClient> = {},
-): VotingApiClient {
-  return {
-    fetchPublicVoterRosterDisplayNames: vi.fn(async () => [
-      "Ada Lovelace",
-      "Staff Sage",
-      "Brannoc",
-    ]),
-    createHonorSystemSessionWithOptionalSharedStaffPassword: vi.fn(async () => ({
-      token: "voter-token",
-      voterId: "11111111-1111-1111-1111-111111111111",
-      displayName: "Ada Lovelace",
-      isStaff: false,
-    })),
-    ...overrides,
-  };
-}
 
 describe("NameGatePage", () => {
   it("reuses only the locked design-system primitives", () => {
@@ -51,7 +32,6 @@ describe("NameGatePage", () => {
       <NameGatePage
         votingApiClient={votingApiClient}
         onHonorSystemSessionEstablished={vi.fn()}
-        onOpenHeraldryGallery={vi.fn()}
       />,
     );
 
@@ -77,7 +57,6 @@ describe("NameGatePage", () => {
       <NameGatePage
         votingApiClient={votingApiClient}
         onHonorSystemSessionEstablished={onHonorSystemSessionEstablished}
-        onOpenHeraldryGallery={vi.fn()}
       />,
     );
 
@@ -120,7 +99,6 @@ describe("NameGatePage", () => {
       <NameGatePage
         votingApiClient={votingApiClient}
         onHonorSystemSessionEstablished={onHonorSystemSessionEstablished}
-        onOpenHeraldryGallery={vi.fn()}
       />,
     );
 
@@ -159,7 +137,6 @@ describe("NameGatePage", () => {
       <NameGatePage
         votingApiClient={votingApiClient}
         onHonorSystemSessionEstablished={vi.fn()}
-        onOpenHeraldryGallery={vi.fn()}
       />,
     );
 
@@ -191,7 +168,6 @@ describe("NameGatePage", () => {
       <NameGatePage
         votingApiClient={votingApiClient}
         onHonorSystemSessionEstablished={onHonorSystemSessionEstablished}
-        onOpenHeraldryGallery={vi.fn()}
       />,
     );
 
@@ -224,7 +200,6 @@ describe("NameGatePage", () => {
       <NameGatePage
         votingApiClient={votingApiClient}
         onHonorSystemSessionEstablished={onHonorSystemSessionEstablished}
-        onOpenHeraldryGallery={vi.fn()}
       />,
     );
 
@@ -243,5 +218,19 @@ describe("NameGatePage", () => {
     expect(screen.queryByText(/wrong/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/incorrect/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/invalid/i)).not.toBeInTheDocument();
+  });
+
+  it("does not offer a public Heraldry gallery from the name gate", async () => {
+    render(
+      <NameGatePage
+        votingApiClient={createVotingApiClientMock()}
+        onHonorSystemSessionEstablished={vi.fn()}
+      />,
+    );
+
+    await screen.findByRole("heading", { name: "Name the champion" });
+    expect(
+      screen.queryByRole("button", { name: "Heraldry gallery" }),
+    ).not.toBeInTheDocument();
   });
 });

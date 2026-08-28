@@ -3,6 +3,7 @@ import type { HonorSystemSession, VotingApiClient } from "../api/votingApiTypes"
 import { DesignSystemGallery } from "../pages/DesignSystemGallery/DesignSystemGallery";
 import { DestinationKeepPage } from "../pages/keeps/DestinationKeepPage";
 import { NameGatePage } from "../pages/NameGate/NameGatePage";
+import { VotingHallPage } from "../pages/VotingHall/VotingHallPage";
 import {
   clearHonorSystemSessionFromBrowserStorage,
   determineAppPathnameAfterHonorSystemSession,
@@ -31,6 +32,18 @@ export function AppRouter({ votingApiClient }: AppRouterProperties) {
       return;
     }
 
+    if (pathname === APP_PATHNAMES.gallery) {
+      if (honorSystemSession === undefined) {
+        navigateToPathname(APP_PATHNAMES.nameGate);
+        return;
+      }
+
+      if (!honorSystemSession.isStaff) {
+        navigateToPathname(APP_PATHNAMES.voterKeep);
+        return;
+      }
+    }
+
     if (pathname === APP_PATHNAMES.staffKeep) {
       if (honorSystemSession === undefined) {
         navigateToPathname(APP_PATHNAMES.nameGate);
@@ -57,8 +70,14 @@ export function AppRouter({ votingApiClient }: AppRouterProperties) {
     navigateToPathname(APP_PATHNAMES.nameGate);
   }
 
-  if (pathname === APP_PATHNAMES.gallery) {
-    return <DesignSystemGallery />;
+  if (pathname === APP_PATHNAMES.gallery && honorSystemSession?.isStaff) {
+    return (
+      <DesignSystemGallery
+        onReturnToStaffKeep={() => {
+          navigateToPathname(APP_PATHNAMES.staffKeep);
+        }}
+      />
+    );
   }
 
   if (pathname === APP_PATHNAMES.staffKeep && honorSystemSession?.isStaff) {
@@ -67,15 +86,18 @@ export function AppRouter({ votingApiClient }: AppRouterProperties) {
         keepKind="staff"
         displayName={honorSystemSession.displayName}
         onReturnToNameGate={returnToTheNameGate}
+        onOpenHeraldryGallery={() => {
+          navigateToPathname(APP_PATHNAMES.gallery);
+        }}
       />
     );
   }
 
   if (pathname === APP_PATHNAMES.voterKeep && honorSystemSession) {
     return (
-      <DestinationKeepPage
-        keepKind="voter"
-        displayName={honorSystemSession.displayName}
+      <VotingHallPage
+        votingApiClient={votingApiClient}
+        honorSystemSession={honorSystemSession}
         onReturnToNameGate={returnToTheNameGate}
       />
     );
@@ -87,9 +109,6 @@ export function AppRouter({ votingApiClient }: AppRouterProperties) {
       onHonorSystemSessionEstablished={
         rememberHonorSystemSessionAndEnterTheAppropriateHall
       }
-      onOpenHeraldryGallery={() => {
-        navigateToPathname(APP_PATHNAMES.gallery);
-      }}
     />
   );
 }
