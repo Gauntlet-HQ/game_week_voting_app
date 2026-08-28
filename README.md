@@ -56,12 +56,15 @@ The API lives in `backend`. Categories are the Postgres enum `award_category`:
 
 Regular voters pick a roster name with no password. Staff names use **one shared staff password** (hashed in `staff_credentials`). A wrong password never grants staff and never reveals whether the name is marked staff. Session tokens encode `voter_id` + `isStaff`.
 
+On first boot, if `voters` is empty and `STAFF_PASSWORD` is set, the API inserts one staff roster name (`BOOTSTRAP_STAFF_NAME`, default `Staff`) so an operator can pick that name, open a staff session, and import CSVs. Existing rows are left alone.
+
 ### Environment
 
 | Variable | Required | Purpose |
 | --- | --- | --- |
 | `DATABASE_URL` | yes | Postgres connection string |
 | `STAFF_PASSWORD` | on first boot (and in production) | Hashed into `staff_credentials` **only if that table is empty** |
+| `BOOTSTRAP_STAFF_NAME` | no (default `Staff`) | Display name for one staff voter inserted on boot **only if `voters` is empty** and `STAFF_PASSWORD` is set |
 | `SESSION_SECRET` | production | HMAC secret for session tokens |
 | `PORT` | no (default `3000`) | Listen port |
 | `HOST` | no (default `0.0.0.0`) | Listen host |
@@ -71,6 +74,7 @@ Copy `backend/.env.example` and export the values (or put them in the shell / Ra
 ```bash
 export DATABASE_URL=postgresql://voting:voting@127.0.0.1:5432/voting_dev
 export STAFF_PASSWORD=change-me-shared-staff-password
+export BOOTSTRAP_STAFF_NAME=Staff
 export SESSION_SECRET=change-me-to-a-long-random-string
 ```
 
@@ -110,12 +114,12 @@ curl -s -X POST http://localhost:3000/sessions \
   -d '{"displayName":"Ada Lovelace"}'
 ```
 
-Staff session (shared password):
+Staff session (shared password). On an empty production roster the bootstrap name is `Staff` (or `BOOTSTRAP_STAFF_NAME`):
 
 ```bash
 TOKEN=$(curl -s -X POST http://localhost:3000/sessions \
   -H 'content-type: application/json' \
-  -d '{"displayName":"Staff Sage","staffPassword":"change-me-shared-staff-password"}' \
+  -d '{"displayName":"Staff","staffPassword":"change-me-shared-staff-password"}' \
   | jq -r .token)
 ```
 

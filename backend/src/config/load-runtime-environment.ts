@@ -1,8 +1,10 @@
 import { z } from "zod";
+import { resolveBootstrapStaffDisplayName } from "../staff/bootstrap-staff-voter.js";
 
 const runtimeEnvironmentSchema = z.object({
   DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
   STAFF_PASSWORD: z.string().optional(),
+  BOOTSTRAP_STAFF_NAME: z.string().optional(),
   SESSION_SECRET: z.string().optional(),
   PORT: z.coerce.number().int().positive().default(3000),
   HOST: z.string().default("0.0.0.0"),
@@ -12,6 +14,7 @@ const runtimeEnvironmentSchema = z.object({
 export type RuntimeEnvironment = {
   databaseUrl: string;
   staffPassword: string | undefined;
+  bootstrapStaffDisplayName: string;
   sessionSecret: string;
   port: number;
   host: string;
@@ -34,6 +37,9 @@ export function loadRuntimeEnvironment(
   return {
     databaseUrl: parsed.DATABASE_URL,
     staffPassword: parsed.STAFF_PASSWORD,
+    bootstrapStaffDisplayName: resolveBootstrapStaffDisplayName(
+      parsed.BOOTSTRAP_STAFF_NAME
+    ),
     sessionSecret:
       sessionSecret ?? "development-only-session-secret-change-me",
     port: parsed.PORT,
