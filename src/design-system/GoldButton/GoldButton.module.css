@@ -1,0 +1,59 @@
+.goldButton {
+  font-family: var(--font-family-display);
+  font-size: 0.92rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-radius: var(--radius-button);
+  padding: 0.55rem 1.15rem;
+  cursor: pointer;
+  border-style: solid;
+  border-width: var(--border-width-card);
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease;
+}
+
+.goldButton:focus-visible {
+  outline: var(--border-width-selected-portrait) solid
+    var(--color-ember-selected-focus);
+  outline-offset: 2px;
+}
+
+.goldButton:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.goldButtonPrimary {
+  background-color: var(--color-gold-trim);
+  border-color: var(--color-gold-muted);
+  color: var(--color-parchment-ink);
+}
+
+.goldButtonPrimary:hover:not(:disabled) {
+  background-color: var(--color-gold-hover);
+}
+
+.goldButtonSecondary {
+  background-color: var(--color-stone-raised-background);
+  border-color: var(--color-gold-trim);
+  color: var(--color-gold-trim);
+}
+
+.goldButtonSecondary:hover:not(:disabled) {
+  border-color: var(--color-gold-hover);
+  color: var(--color-gold-hover);
+}
+
+.goldButtonDanger {
+  background-color: var(--color-danger-wax-seal);
+  border-color: var(--color-gold-muted);
+  color: var(--color-parchment-fill);
+}
+
+.goldButtonDanger:hover:not(:disabled) {
+  border-color: var(--color-gold-hover);
+  color: var(--color-gold-hover);
+}

@@ -1,0 +1,23 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-stone-page-background);
+  color: var(--color-parchment-fill);
+  font-family: var(--font-family-body);
+}
+
+button,
+input {
+  font: inherit;
+}

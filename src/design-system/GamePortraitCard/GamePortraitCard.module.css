@@ -1,0 +1,86 @@
+.gamePortraitCard {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  background: var(--color-stone-panel-background);
+  color: var(--color-parchment-ink);
+  border: var(--border-width-card) solid var(--color-gold-trim);
+  border-radius: var(--radius-card);
+  box-shadow: inset 0 0 0 1px
+    color-mix(in srgb, var(--color-gold-trim) 20%, transparent);
+  overflow: hidden;
+  font-family: var(--font-family-body);
+}
+
+.gamePortraitCard:focus-visible {
+  outline: var(--border-width-selected-portrait) solid
+    var(--color-ember-selected-focus);
+  outline-offset: 3px;
+}
+
+.gamePortraitCardSelected {
+  border-width: var(--border-width-selected-portrait);
+  border-color: var(--color-ember-selected-focus);
+  box-shadow:
+    0 0 0 1px var(--color-ember-selected-focus),
+    0 0 18px color-mix(in srgb, var(--color-ember-selected-focus) 38%, transparent);
+}
+
+.portraitWell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 8.5rem;
+  background-color: var(--color-stone-raised-background);
+  background-image:
+    radial-gradient(
+      circle at 50% 40%,
+      var(--color-gold-muted) 0%,
+      transparent 55%
+    ),
+    linear-gradient(
+      180deg,
+      var(--color-stone-raised-background),
+      var(--color-stone-page-background)
+    );
+}
+
+.portraitSigil {
+  width: 2.75rem;
+  height: 2.75rem;
+  border: var(--border-width-card) solid var(--color-gold-trim);
+  background: radial-gradient(
+    circle,
+    var(--color-ember-selected-focus),
+    var(--color-stone-page-background)
+  );
+  transform: rotate(45deg);
+}
+
+.portraitNameplate {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.85rem 0.9rem 1rem;
+  background-color: var(--color-parchment-fill);
+}
+
+.gameTitle {
+  font-family: var(--font-family-display);
+  font-size: 1.02rem;
+  letter-spacing: 0.06em;
+  color: var(--color-parchment-ink);
+}
+
+.submitterName,
+.gameUrl {
+  color: var(--color-parchment-faded-ink);
+  font-size: 0.85rem;
+}
+
+.gameUrl {
+  word-break: break-all;
+}

@@ -1,0 +1,30 @@
+.pageShell {
+  min-height: 100vh;
+  background-color: var(--color-stone-page-background);
+  background-image:
+    radial-gradient(
+      ellipse at 50% -10%,
+      var(--color-stone-raised-background) 0%,
+      transparent 52%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-stone-page-background) 40%, transparent) 0%,
+      transparent 28%,
+      color-mix(in srgb, var(--color-stone-page-background) 45%, transparent) 100%
+    );
+  color: var(--color-parchment-fill);
+  font-family: var(--font-family-body);
+}
+
+.pageShellInner {
+  margin: 0 auto;
+  max-width: 72rem;
+  padding: 2.5rem 1.5rem 4rem;
+}
+
+.pageShellMain {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}

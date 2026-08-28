@@ -1,0 +1,40 @@
+.stoneInputLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-family: var(--font-family-body);
+}
+
+.stoneInputLabelText {
+  font-family: var(--font-family-display);
+  color: var(--color-gold-trim);
+  letter-spacing: 0.08em;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+}
+
+.stoneInput {
+  background-color: var(--color-stone-panel-background);
+  color: var(--color-parchment-fill);
+  border: var(--border-width-card) solid var(--color-gold-trim);
+  border-radius: var(--radius-button);
+  padding: 0.6rem 0.75rem;
+  font-family: var(--font-family-body);
+  font-size: 1rem;
+}
+
+.stoneInput::placeholder {
+  color: var(--color-parchment-faded-ink);
+}
+
+.stoneInput:focus-visible {
+  outline: var(--border-width-selected-portrait) solid
+    var(--color-ember-selected-focus);
+  outline-offset: 1px;
+  border-color: var(--color-ember-selected-focus);
+}
+
+.stoneInput:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

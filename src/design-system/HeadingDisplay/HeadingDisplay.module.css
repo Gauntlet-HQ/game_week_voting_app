@@ -1,0 +1,43 @@
+.headingDisplay {
+  font-family: var(--font-family-display);
+  letter-spacing: 0.12em;
+  font-weight: 600;
+  line-height: 1.2;
+  margin: 0;
+  text-shadow:
+    0 1px 0 var(--color-stone-page-background),
+    0 0 14px color-mix(in srgb, var(--color-gold-trim) 22%, transparent);
+}
+
+.headingDisplayInkGold {
+  color: var(--color-gold-trim);
+}
+
+.headingDisplayInkParchment {
+  color: var(--color-parchment-ink);
+  text-shadow: none;
+}
+
+.headingDisplayLevel1 {
+  font-size: 2.35rem;
+}
+
+.headingDisplayLevel2 {
+  font-size: 1.7rem;
+}
+
+.headingDisplayLevel3 {
+  font-size: 1.28rem;
+}
+
+.headingDisplayLevel4 {
+  font-size: 1.1rem;
+}
+
+.headingDisplayLevel5 {
+  font-size: 1rem;
+}
+
+.headingDisplayLevel6 {
+  font-size: 0.92rem;
+}
