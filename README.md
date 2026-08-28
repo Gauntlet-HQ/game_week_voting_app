@@ -4,22 +4,33 @@ Staff upload game submissions by CSV. Voters pick a name from a roster (honor sy
 
 ## Layout
 
-- Repo root — Vite fantasy design system and primitive gallery
+- Repo root — Vite React app: honor-system name gate, design-system primitives, gallery at `/gallery`
 - `backend/` — TypeScript Fastify + Postgres API
-- `backend/migrations/001_award_voting_schema.sql` — locked schema (tables, RESTRICT FKs, lock/vote triggers). Reviewed on the API PR; there is no separate migrations branch.
+- `backend/migrations/001_award_voting_schema.sql` — locked schema (tables, RESTRICT FKs, lock/vote triggers)
 
 ## Status
 
-This iteration ships the fantasy design system and a gallery of primitives. Name-gate, voting board, staff CSV upload, and Railway hosting are not included yet.
+This iteration ships the name gate (pick a roster name; optional shared staff password) and the fantasy design system. The four-category voting board, staff CSV UI, and Railway hosting are not included yet.
 
-## Run the design system gallery
+The name gate talks to the real API:
+
+- `GET /voters` — public roster, display names only
+- `POST /sessions` — body `{ displayName, staffPassword? }`. Honor-system name pick; `isStaff` is true only when the shared staff password is present and valid for a staff name. A wrong password still opens a voter session and does not leak staff-ness.
+
+## Run the name gate
 
 ```bash
 npm install
 npm run dev
 ```
 
-Vite prints a local URL (default `http://localhost:5173`). The home page is the primitive gallery: tokens, parchment, gold buttons, stone fields, and character-select portraits.
+Vite prints a local URL (default `http://localhost:5173`). The home page is the name gate. Point it at the Fastify API with `VITE_API_BASE_URL` (default `http://localhost:3000`):
+
+```bash
+cp .env.example .env
+```
+
+The design-system gallery lives at `/gallery`.
 
 ## Frontend tests
 
