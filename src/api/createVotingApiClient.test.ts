@@ -326,6 +326,213 @@ describe("createVotingApiClient", () => {
     });
   });
 
+  it("posts games CSV as a raw text/csv body to POST /staff/games/import", async () => {
+    const gamesCsvText = [
+      "title,submitter_name,url",
+      "Dungeon Crawler,Ada Lovelace,https://example.com/dungeon",
+    ].join("\n");
+    const fetchImplementation = vi.fn<typeof fetch>(
+      async (requestUrl, requestInit) => {
+        expect(String(requestUrl)).toBe(`${apiBaseUrl}/staff/games/import`);
+        expect(requestInit?.method).toBe("POST");
+        expect(readContentTypeHeader(requestInit)).toBe("text/csv");
+        expect(requestInit?.body).toBe(gamesCsvText);
+        expect(readAuthorizationHeader(requestInit)).toBe("Bearer staff-token");
+        return createJsonResponse(200, {
+          upserted: 1,
+          deleted: 0,
+          withdrawn: 0,
+        });
+      },
+    );
+
+    const votingApiClient = createVotingApiClient({
+      fetchImplementation,
+      apiBaseUrl,
+    });
+
+    await expect(
+      votingApiClient.importGamesFromCsvText({
+        sessionToken: "staff-token",
+        csvText: gamesCsvText,
+      }),
+    ).resolves.toEqual({
+      upserted: 1,
+      deleted: 0,
+      withdrawn: 0,
+    });
+  });
+
+  it("surfaces games CSV row errors from a 400 on POST /staff/games/import", async () => {
+    const fetchImplementation = vi.fn<typeof fetch>(async () =>
+      createJsonResponse(400, {
+        message: "Games CSV row 2 has a blank title, submitter_name, or url",
+      }),
+    );
+
+    const votingApiClient = createVotingApiClient({
+      fetchImplementation,
+      apiBaseUrl,
+    });
+
+    const gamesImportError = await votingApiClient
+      .importGamesFromCsvText({
+        sessionToken: "staff-token",
+        csvText: "title,submitter_name,url\n,,https://example.com/blank",
+      })
+      .catch((error: unknown) => error);
+
+    expect(gamesImportError).toBeInstanceOf(VotingApiRequestFailedError);
+    expect(gamesImportError).toMatchObject({
+      failureKind: "http",
+      httpStatusCode: 400,
+      message: "Games CSV row 2 has a blank title, submitter_name, or url",
+    });
+  });
+
+  it("posts roster CSV as a raw text/csv body to POST /staff/voters/import", async () => {
+    const rosterCsvText = [
+      "display_name,is_staff",
+      "Ada Lovelace,false",
+      "Staff Sage,true",
+    ].join("\n");
+    const fetchImplementation = vi.fn<typeof fetch>(
+      async (requestUrl, requestInit) => {
+        expect(String(requestUrl)).toBe(`${apiBaseUrl}/staff/voters/import`);
+        expect(requestInit?.method).toBe("POST");
+        expect(readContentTypeHeader(requestInit)).toBe("text/csv");
+        expect(requestInit?.body).toBe(rosterCsvText);
+        expect(readAuthorizationHeader(requestInit)).toBe("Bearer staff-token");
+        return createJsonResponse(200, {
+          upserted: 2,
+          deleted: 0,
+          keptBecauseBallotExists: 0,
+        });
+      },
+    );
+
+    const votingApiClient = createVotingApiClient({
+      fetchImplementation,
+      apiBaseUrl,
+    });
+
+    await expect(
+      votingApiClient.importVoterRosterFromCsvText({
+        sessionToken: "staff-token",
+        csvText: rosterCsvText,
+      }),
+    ).resolves.toEqual({
+      upserted: 2,
+      deleted: 0,
+      keptBecauseBallotExists: 0,
+    });
+  });
+
+  it("surfaces roster CSV row errors from a 400 on POST /staff/voters/import", async () => {
+    const fetchImplementation = vi.fn<typeof fetch>(async () =>
+      createJsonResponse(400, {
+        message: "Voter roster CSV row 2 has a blank display_name",
+      }),
+    );
+
+    const votingApiClient = createVotingApiClient({
+      fetchImplementation,
+      apiBaseUrl,
+    });
+
+    const rosterImportError = await votingApiClient
+      .importVoterRosterFromCsvText({
+        sessionToken: "staff-token",
+        csvText: "display_name,is_staff\n,true",
+      })
+      .catch((error: unknown) => error);
+
+    expect(rosterImportError).toBeInstanceOf(VotingApiRequestFailedError);
+    expect(rosterImportError).toMatchObject({
+      failureKind: "http",
+      httpStatusCode: 400,
+      message: "Voter roster CSV row 2 has a blank display_name",
+    });
+  });
+
+  it("loads locked-ballot results from GET /staff/results with the staff bearer token", async () => {
+    const fetchImplementation = vi.fn<typeof fetch>(
+      async (requestUrl, requestInit) => {
+        expect(String(requestUrl)).toBe(`${apiBaseUrl}/staff/results`);
+        expect(requestInit?.method).toBe("GET");
+        expect(readAuthorizationHeader(requestInit)).toBe("Bearer staff-token");
+        return createJsonResponse(200, {
+          lockedBallotCount: 2,
+          categories: [
+            {
+              category: "technical_achievement",
+              standings: [
+                {
+                  rank: 1,
+                  voteCount: 2,
+                  isTied: false,
+                  game: dungeonCrawlerGame,
+                },
+              ],
+            },
+          ],
+        });
+      },
+    );
+
+    const votingApiClient = createVotingApiClient({
+      fetchImplementation,
+      apiBaseUrl,
+    });
+
+    await expect(
+      votingApiClient.fetchLockedBallotResultsForStaff({
+        sessionToken: "staff-token",
+      }),
+    ).resolves.toMatchObject({
+      lockedBallotCount: 2,
+      categories: [
+        {
+          category: "technical_achievement",
+          standings: [
+            {
+              rank: 1,
+              voteCount: 2,
+              isTied: false,
+              game: dungeonCrawlerGame,
+            },
+          ],
+        },
+      ],
+    });
+  });
+
+  it("surfaces 403 when a voter token tries to read staff results", async () => {
+    const fetchImplementation = vi.fn<typeof fetch>(async () =>
+      createJsonResponse(403, {
+        message: "Staff authorization is required",
+      }),
+    );
+
+    const votingApiClient = createVotingApiClient({
+      fetchImplementation,
+      apiBaseUrl,
+    });
+
+    const staffForbiddenError = await votingApiClient
+      .fetchLockedBallotResultsForStaff({
+        sessionToken: "voter-token",
+      })
+      .catch((error: unknown) => error);
+
+    expect(staffForbiddenError).toBeInstanceOf(VotingApiRequestFailedError);
+    expect(staffForbiddenError).toMatchObject({
+      failureKind: "http",
+      httpStatusCode: 403,
+      message: "Staff authorization is required",
+    });
+  });
+
   it("does not invent games when GET /games is malformed", async () => {
     const fetchImplementation = vi.fn<typeof fetch>(async () =>
       createJsonResponse(200, {
@@ -353,4 +560,10 @@ function readAuthorizationHeader(
   requestInit: RequestInit | undefined,
 ): string | null {
   return new Headers(requestInit?.headers).get("Authorization");
+}
+
+function readContentTypeHeader(
+  requestInit: RequestInit | undefined,
+): string | null {
+  return new Headers(requestInit?.headers).get("Content-Type");
 }

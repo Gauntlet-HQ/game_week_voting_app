@@ -4,27 +4,33 @@ Staff upload game submissions by CSV. Voters pick a name from a roster (honor sy
 
 ## Layout
 
-- Repo root — Vite React app: honor-system name gate, four-category voting hall, design-system primitives. Heraldry gallery is staff-only (`/gallery`).
+- Repo root — Vite React app: honor-system name gate, four-category voting hall, staff CSV ledgers and sealed results, design-system primitives. Heraldry gallery is staff-only (`/gallery`).
 - `backend/` — TypeScript Fastify + Postgres API
 - `backend/migrations/001_award_voting_schema.sql` — locked schema (tables, RESTRICT FKs, lock/vote triggers)
 
 ## Status
 
-This iteration ships the name gate (pick a roster name; optional shared staff password), the four-category voting hall with lock-in, and the fantasy design system. The staff CSV UI and Railway hosting are not included yet.
+This iteration ships the name gate (pick a roster name; optional shared staff password), the four-category voting hall with lock-in, the staff keep (CSV upload and sealed results), and the fantasy design system. Railway hosting is not included yet.
 
 The name gate talks to the real API:
 
 - `GET /voters` — public roster, display names only
 - `POST /sessions` — body `{ displayName, staffPassword? }`. Honor-system name pick; `isStaff` is true only when the shared staff password is present and valid for a staff name. A wrong password still opens a voter session and does not leak staff-ness.
 
-The voting hall (after a session) talks to:
+The voting hall (after a voter session) talks to:
 
 - `GET /games` — submitted games still on the ballot
 - `GET /ballot` — current draft or sealed ballot
 - `PUT /ballot` — replace an unlocked draft (`{ votes: [{ category, gameId }] }`)
 - `POST /ballot/lock` — seal after all four categories are filled; 400 if incomplete, 409 if already locked
 
-## Run the name gate and voting hall
+The staff keep (after a staff session, `isStaff: true`) talks to:
+
+- `POST /staff/games/import` — raw `text/csv` body (`title,submitter_name,url`)
+- `POST /staff/voters/import` — raw `text/csv` body (`display_name,is_staff`)
+- `GET /staff/results` — locked ballots only; counts and winners per category
+
+## Run the name gate, voting hall, and staff keep
 
 ```bash
 npm install
@@ -37,7 +43,7 @@ Vite prints a local URL (default `http://localhost:5173`). The home page is the 
 cp .env.example .env
 ```
 
-The Heraldry / design-system gallery is staff-only. It is not linked from the name gate, and an unauthenticated `/gallery` visit returns to the gate.
+The Heraldry / design-system gallery is staff-only. It is not linked from the name gate, and an unauthenticated `/gallery` visit returns to the gate. The staff CSV ledgers and sealed results live at `/staff` and are hidden without a staff session.
 
 ## Frontend tests
 

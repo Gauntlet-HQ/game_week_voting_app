@@ -1,0 +1,40 @@
+.staffKeepLayout {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.staffKeepActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.csvFilePicker {
+  position: relative;
+}
+
+.visuallyHiddenFileInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.resultsStandingsList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.resultsStandingRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: 18rem;
+}
