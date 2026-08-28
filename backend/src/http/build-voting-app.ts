@@ -6,6 +6,7 @@ import type pg from "pg";
 import { openApiDocument } from "../openapi/voting-api-openapi.js";
 import { PostgresVotingStore } from "../repositories/postgres-voting-store.js";
 import { bootstrapStaffPasswordHashIfMissing } from "../staff/bootstrap-staff-password-hash.js";
+import { bootstrapStaffVoterIfRosterEmpty } from "../staff/bootstrap-staff-voter.js";
 import {
   attachVotingErrorHandler,
   registerHttpRoutes
@@ -17,6 +18,7 @@ export type BuildVotingAppInput = {
   sessionSecret: string;
   staffPassword: string | undefined;
   nodeEnv: string;
+  bootstrapStaffDisplayName?: string;
 };
 
 export async function buildVotingApp(input: BuildVotingAppInput) {
@@ -29,6 +31,11 @@ export async function buildVotingApp(input: BuildVotingAppInput) {
     store,
     staffPassword: input.staffPassword,
     nodeEnv: input.nodeEnv
+  });
+  await bootstrapStaffVoterIfRosterEmpty({
+    store,
+    staffPassword: input.staffPassword,
+    bootstrapStaffDisplayName: input.bootstrapStaffDisplayName
   });
 
   await app.register(cors, { origin: true });

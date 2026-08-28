@@ -12,7 +12,8 @@ const app = await buildVotingApp({
   pool,
   sessionSecret: runtimeEnvironment.sessionSecret,
   staffPassword: runtimeEnvironment.staffPassword,
-  nodeEnv: runtimeEnvironment.nodeEnv
+  nodeEnv: runtimeEnvironment.nodeEnv,
+  bootstrapStaffDisplayName: runtimeEnvironment.bootstrapStaffDisplayName
 });
 
 const shutdown = async () => {

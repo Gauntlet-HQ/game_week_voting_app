@@ -282,6 +282,20 @@ export class PostgresVotingStore {
     return new Set(result.rows.map((row) => row.voter_id));
   }
 
+  public async insertStaffVoterWhenRosterIsEmpty(
+    displayName: string
+  ): Promise<boolean> {
+    const result = await this.queryable.query(
+      `
+        INSERT INTO voters (display_name, is_staff)
+        SELECT $1, TRUE
+        WHERE NOT EXISTS (SELECT 1 FROM voters)
+      `,
+      [displayName]
+    );
+    return (result.rowCount ?? 0) > 0;
+  }
+
   public async upsertVoterByLowerDisplayName(input: {
     displayName: string;
     isStaff: boolean;
