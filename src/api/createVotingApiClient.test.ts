@@ -1,4 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
+import {
+  completeUnlockedVoterBallot,
+  dungeonCrawlerGame,
+  fourGamesOnTheBallot,
+  lanternsOfQeynosGame,
+  sealedVoterBallot,
+} from "../test/votingHallTestFixtures";
 import { createVotingApiClient } from "./createVotingApiClient";
 import { VotingApiRequestFailedError } from "./VotingApiRequestFailedError";
 
@@ -146,4 +153,204 @@ describe("createVotingApiClient", () => {
         "The guild roster could not be summoned. The halls are unreachable.",
     });
   });
+
+  it("loads games from GET /games with the session bearer token", async () => {
+    const fetchImplementation = vi.fn<typeof fetch>(
+      async (requestUrl, requestInit) => {
+        expect(String(requestUrl)).toBe(`${apiBaseUrl}/games`);
+        expect(requestInit?.method).toBe("GET");
+        expect(readAuthorizationHeader(requestInit)).toBe(
+          "Bearer session-token",
+        );
+        return createJsonResponse(200, { games: fourGamesOnTheBallot });
+      },
+    );
+
+    const votingApiClient = createVotingApiClient({
+      fetchImplementation,
+      apiBaseUrl,
+    });
+
+    await expect(
+      votingApiClient.fetchGamesListedOnTheBallot({
+        sessionToken: "session-token",
+      }),
+    ).resolves.toEqual(fourGamesOnTheBallot);
+  });
+
+  it("loads the current ballot from GET /ballot with the session bearer token", async () => {
+    const fetchImplementation = vi.fn<typeof fetch>(
+      async (requestUrl, requestInit) => {
+        expect(String(requestUrl)).toBe(`${apiBaseUrl}/ballot`);
+        expect(readAuthorizationHeader(requestInit)).toBe(
+          "Bearer session-token",
+        );
+        return createJsonResponse(200, completeUnlockedVoterBallot);
+      },
+    );
+
+    const votingApiClient = createVotingApiClient({
+      fetchImplementation,
+      apiBaseUrl,
+    });
+
+    await expect(
+      votingApiClient.fetchBallotForCurrentVoter({
+        sessionToken: "session-token",
+      }),
+    ).resolves.toEqual(completeUnlockedVoterBallot);
+  });
+
+  it("replaces an unlocked draft with PUT /ballot until the ballot is locked", async () => {
+    const fetchImplementation = vi.fn<typeof fetch>(
+      async (requestUrl, requestInit) => {
+        expect(String(requestUrl)).toBe(`${apiBaseUrl}/ballot`);
+        expect(requestInit?.method).toBe("PUT");
+        expect(readAuthorizationHeader(requestInit)).toBe(
+          "Bearer session-token",
+        );
+        expect(JSON.parse(String(requestInit?.body))).toEqual({
+          votes: [
+            {
+              category: "technical_achievement",
+              gameId: dungeonCrawlerGame.gameId,
+            },
+          ],
+        });
+        return createJsonResponse(200, {
+          ballotId: completeUnlockedVoterBallot.ballotId,
+          isLocked: false,
+          lockedAt: null,
+          votes: [
+            {
+              category: "technical_achievement",
+              gameId: dungeonCrawlerGame.gameId,
+            },
+          ],
+        });
+      },
+    );
+
+    const votingApiClient = createVotingApiClient({
+      fetchImplementation,
+      apiBaseUrl,
+    });
+
+    await expect(
+      votingApiClient.replaceUnlockedDraftBallotVotes({
+        sessionToken: "session-token",
+        votes: [
+          {
+            category: "technical_achievement",
+            gameId: dungeonCrawlerGame.gameId,
+          },
+        ],
+      }),
+    ).resolves.toMatchObject({ isLocked: false });
+  });
+
+  it("refuses PUT /ballot with 409 when the ballot is already sealed", async () => {
+    const fetchImplementation = vi.fn<typeof fetch>(async () =>
+      createJsonResponse(409, {
+        message: "Ballot is locked and cannot be changed",
+      }),
+    );
+
+    const votingApiClient = createVotingApiClient({
+      fetchImplementation,
+      apiBaseUrl,
+    });
+
+    const lockedError = await votingApiClient
+      .replaceUnlockedDraftBallotVotes({
+        sessionToken: "session-token",
+        votes: completeUnlockedVoterBallot.votes,
+      })
+      .catch((error: unknown) => error);
+
+    expect(lockedError).toBeInstanceOf(VotingApiRequestFailedError);
+    expect(lockedError).toMatchObject({
+      failureKind: "http",
+      httpStatusCode: 409,
+      message: "Ballot is locked and cannot be changed",
+    });
+  });
+
+  it("seals a complete ballot with POST /ballot/lock", async () => {
+    const fetchImplementation = vi.fn<typeof fetch>(
+      async (requestUrl, requestInit) => {
+        expect(String(requestUrl)).toBe(`${apiBaseUrl}/ballot/lock`);
+        expect(requestInit?.method).toBe("POST");
+        expect(readAuthorizationHeader(requestInit)).toBe(
+          "Bearer session-token",
+        );
+        return createJsonResponse(200, sealedVoterBallot);
+      },
+    );
+
+    const votingApiClient = createVotingApiClient({
+      fetchImplementation,
+      apiBaseUrl,
+    });
+
+    await expect(
+      votingApiClient.lockCompletedBallotForCurrentVoter({
+        sessionToken: "session-token",
+      }),
+    ).resolves.toEqual(sealedVoterBallot);
+  });
+
+  it("surfaces a 400 when locking an incomplete ballot", async () => {
+    const fetchImplementation = vi.fn<typeof fetch>(async () =>
+      createJsonResponse(400, {
+        message:
+          "Locking a ballot requires one real non-withdrawn game in each of the four award categories",
+      }),
+    );
+
+    const votingApiClient = createVotingApiClient({
+      fetchImplementation,
+      apiBaseUrl,
+    });
+
+    const incompleteLockError = await votingApiClient
+      .lockCompletedBallotForCurrentVoter({
+        sessionToken: "session-token",
+      })
+      .catch((error: unknown) => error);
+
+    expect(incompleteLockError).toBeInstanceOf(VotingApiRequestFailedError);
+    expect(incompleteLockError).toMatchObject({
+      failureKind: "http",
+      httpStatusCode: 400,
+    });
+  });
+
+  it("does not invent games when GET /games is malformed", async () => {
+    const fetchImplementation = vi.fn<typeof fetch>(async () =>
+      createJsonResponse(200, {
+        games: [{ title: lanternsOfQeynosGame.title }],
+      }),
+    );
+
+    const votingApiClient = createVotingApiClient({
+      fetchImplementation,
+      apiBaseUrl,
+    });
+
+    const gamesError = await votingApiClient
+      .fetchGamesListedOnTheBallot({ sessionToken: "session-token" })
+      .catch((error: unknown) => error);
+
+    expect(gamesError).toBeInstanceOf(VotingApiRequestFailedError);
+    expect(gamesError).toMatchObject({
+      message: "The halls returned an unreadable list of games.",
+    });
+  });
 });
+
+function readAuthorizationHeader(
+  requestInit: RequestInit | undefined,
+): string | null {
+  return new Headers(requestInit?.headers).get("Authorization");
+}

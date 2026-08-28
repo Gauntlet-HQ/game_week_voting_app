@@ -1,0 +1,33 @@
+.votingHallLayout {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.hallActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.categoryBannerList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.seekField {
+  max-width: 24rem;
+}
+
+.portraitGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  gap: 1rem;
+}
+
+.lockInSelections {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}

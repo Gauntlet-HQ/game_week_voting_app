@@ -16,13 +16,11 @@ import styles from "./NameGatePage.module.css";
 type NameGatePageProperties = {
   votingApiClient: VotingApiClient;
   onHonorSystemSessionEstablished: (session: HonorSystemSession) => void;
-  onOpenHeraldryGallery: () => void;
 };
 
 export function NameGatePage({
   votingApiClient,
   onHonorSystemSessionEstablished,
-  onOpenHeraldryGallery,
 }: NameGatePageProperties) {
   const [rosterDisplayNames, setRosterDisplayNames] = useState<string[]>([]);
   const [rosterLoadState, setRosterLoadState] = useState<
@@ -176,12 +174,6 @@ export function NameGatePage({
                     Summon the roster again
                   </GoldButton>
                 ) : null}
-                <GoldButton
-                  variant="secondary"
-                  onClick={onOpenHeraldryGallery}
-                >
-                  Heraldry gallery
-                </GoldButton>
               </div>
             </div>
           </form>

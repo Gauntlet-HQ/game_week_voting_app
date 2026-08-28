@@ -43,7 +43,13 @@ const voteCategoryNames = [
   "Best Overall",
 ] as const;
 
-export function DesignSystemGallery() {
+type DesignSystemGalleryProperties = {
+  onReturnToStaffKeep?: () => void;
+};
+
+export function DesignSystemGallery({
+  onReturnToStaffKeep,
+}: DesignSystemGalleryProperties) {
   const [ledgerName, setLedgerName] = useState("");
   const [selectedGameTitle, setSelectedGameTitle] = useState<string>(
     galleryGamePortraits[1].gameTitle,
@@ -59,6 +65,11 @@ export function DesignSystemGallery() {
           portraits. These primitives are the guild&apos;s visual language;
           voting, roster gates, and staff ledgers come later.
         </p>
+        {onReturnToStaffKeep ? (
+          <GoldButton variant="secondary" onClick={onReturnToStaffKeep}>
+            Return to the staff keep
+          </GoldButton>
+        ) : null}
       </header>
 
       <section className={styles.gallerySection}>
