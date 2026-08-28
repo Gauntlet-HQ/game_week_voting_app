@@ -1,0 +1,19 @@
+:root {
+  --color-stone-page-background: #1a1410;
+  --color-stone-panel-background: #2a221c;
+  --color-stone-raised-background: #3a3028;
+  --color-gold-trim: #c9a227;
+  --color-gold-hover: #e0c35a;
+  --color-gold-muted: #8a7018;
+  --color-parchment-fill: #e8d9b8;
+  --color-parchment-ink: #1f170f;
+  --color-parchment-faded-ink: #5c4a32;
+  --color-ember-selected-focus: #c45c26;
+  --color-danger-wax-seal: #8b1e1e;
+  --font-family-display: "Cinzel", "Palatino Linotype", Palatino, serif;
+  --font-family-body: "Libre Baskerville", "Palatino Linotype", Palatino, serif;
+  --radius-card: 4px;
+  --radius-button: 2px;
+  --border-width-card: 1px;
+  --border-width-selected-portrait: 2px;
+}
