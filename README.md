@@ -6,6 +6,7 @@ Staff upload game submissions by CSV. Voters pick a name from a roster (honor sy
 
 - Repo root — Vite fantasy design system and primitive gallery
 - `backend/` — TypeScript Fastify + Postgres API
+- `backend/migrations/001_award_voting_schema.sql` — locked schema (tables, RESTRICT FKs, lock/vote triggers). Reviewed on the API PR; there is no separate migrations branch.
 
 ## Status
 

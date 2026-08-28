@@ -1,5 +1,9 @@
--- Rollback-safe: the entire migration runs in a single transaction.
--- Re-running is idempotent (IF NOT EXISTS / OR REPLACE / DROP IF EXISTS).
+-- Locked Game Week Voting schema.
+-- Reviewed on the API pull request (no separate migrations branch).
+-- Product tables and columns match the agreed DDL exactly. No invented columns.
+-- Foreign keys use ON DELETE RESTRICT (never CASCADE).
+-- One rollback-safe transaction; re-running is idempotent
+-- (IF NOT EXISTS / OR REPLACE / DROP IF EXISTS).
 BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
