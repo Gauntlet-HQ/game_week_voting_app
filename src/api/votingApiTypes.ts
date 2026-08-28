@@ -34,6 +34,35 @@ export type VoterBallot = {
   votes: BallotVote[];
 };
 
+export type GamesCsvImportSummary = {
+  upserted: number;
+  deleted: number;
+  withdrawn: number;
+};
+
+export type VoterRosterCsvImportSummary = {
+  upserted: number;
+  deleted: number;
+  keptBecauseBallotExists: number;
+};
+
+export type StaffResultsStanding = {
+  rank: number;
+  voteCount: number;
+  isTied: boolean;
+  game: GameListedOnTheBallot;
+};
+
+export type StaffResultsCategoryStandings = {
+  category: AwardCategory;
+  standings: StaffResultsStanding[];
+};
+
+export type StaffLockedBallotResults = {
+  lockedBallotCount: number;
+  categories: StaffResultsCategoryStandings[];
+};
+
 export type VotingApiClient = {
   fetchPublicVoterRosterDisplayNames: () => Promise<string[]>;
   createHonorSystemSessionWithOptionalSharedStaffPassword: (input: {
@@ -53,6 +82,17 @@ export type VotingApiClient = {
   lockCompletedBallotForCurrentVoter: (input: {
     sessionToken: string;
   }) => Promise<VoterBallot>;
+  importGamesFromCsvText: (input: {
+    sessionToken: string;
+    csvText: string;
+  }) => Promise<GamesCsvImportSummary>;
+  importVoterRosterFromCsvText: (input: {
+    sessionToken: string;
+    csvText: string;
+  }) => Promise<VoterRosterCsvImportSummary>;
+  fetchLockedBallotResultsForStaff: (input: {
+    sessionToken: string;
+  }) => Promise<StaffLockedBallotResults>;
 };
 
 export function isHonorSystemSession(
@@ -122,4 +162,71 @@ export function isVoterBallot(value: unknown): value is VoterBallot {
     Array.isArray(value.votes) &&
     value.votes.every(isBallotVote)
   );
+}
+
+export function isGamesCsvImportSummary(
+  value: unknown,
+): value is GamesCsvImportSummary {
+  return (
+    isPlainRecord(value) &&
+    isNonNegativeInteger(value.upserted) &&
+    isNonNegativeInteger(value.deleted) &&
+    isNonNegativeInteger(value.withdrawn)
+  );
+}
+
+export function isVoterRosterCsvImportSummary(
+  value: unknown,
+): value is VoterRosterCsvImportSummary {
+  return (
+    isPlainRecord(value) &&
+    isNonNegativeInteger(value.upserted) &&
+    isNonNegativeInteger(value.deleted) &&
+    isNonNegativeInteger(value.keptBecauseBallotExists)
+  );
+}
+
+export function isStaffResultsStanding(
+  value: unknown,
+): value is StaffResultsStanding {
+  if (!isPlainRecord(value)) {
+    return false;
+  }
+
+  return (
+    isPositiveInteger(value.rank) &&
+    isNonNegativeInteger(value.voteCount) &&
+    typeof value.isTied === "boolean" &&
+    isGameListedOnTheBallot(value.game)
+  );
+}
+
+export function isStaffResultsCategoryStandings(
+  value: unknown,
+): value is StaffResultsCategoryStandings {
+  return (
+    isPlainRecord(value) &&
+    isAwardCategory(value.category) &&
+    Array.isArray(value.standings) &&
+    value.standings.every(isStaffResultsStanding)
+  );
+}
+
+export function isStaffLockedBallotResults(
+  value: unknown,
+): value is StaffLockedBallotResults {
+  return (
+    isPlainRecord(value) &&
+    isNonNegativeInteger(value.lockedBallotCount) &&
+    Array.isArray(value.categories) &&
+    value.categories.every(isStaffResultsCategoryStandings)
+  );
+}
+
+function isNonNegativeInteger(value: unknown): value is number {
+  return typeof value === "number" && Number.isInteger(value) && value >= 0;
+}
+
+function isPositiveInteger(value: unknown): value is number {
+  return typeof value === "number" && Number.isInteger(value) && value >= 1;
 }

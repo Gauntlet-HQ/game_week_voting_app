@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import type { HonorSystemSession, VotingApiClient } from "../api/votingApiTypes";
 import { DesignSystemGallery } from "../pages/DesignSystemGallery/DesignSystemGallery";
-import { DestinationKeepPage } from "../pages/keeps/DestinationKeepPage";
 import { NameGatePage } from "../pages/NameGate/NameGatePage";
+import { StaffKeepPage } from "../pages/StaffKeep/StaffKeepPage";
 import { VotingHallPage } from "../pages/VotingHall/VotingHallPage";
 import {
   clearHonorSystemSessionFromBrowserStorage,
@@ -82,9 +82,9 @@ export function AppRouter({ votingApiClient }: AppRouterProperties) {
 
   if (pathname === APP_PATHNAMES.staffKeep && honorSystemSession?.isStaff) {
     return (
-      <DestinationKeepPage
-        keepKind="staff"
-        displayName={honorSystemSession.displayName}
+      <StaffKeepPage
+        votingApiClient={votingApiClient}
+        honorSystemSession={honorSystemSession}
         onReturnToNameGate={returnToTheNameGate}
         onOpenHeraldryGallery={() => {
           navigateToPathname(APP_PATHNAMES.gallery);

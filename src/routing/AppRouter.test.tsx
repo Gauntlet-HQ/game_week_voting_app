@@ -119,7 +119,13 @@ describe("AppRouter", () => {
       await screen.findByRole("heading", { name: "Staff keep" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/Welcome, Staff Sage\. The staff ledger will open here\./),
+      screen.getByRole("heading", { name: "Games ledger" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Roster ledger" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Sealed ballot results" }),
     ).toBeInTheDocument();
     expect(window.location.pathname).toBe(APP_PATHNAMES.staffKeep);
   });
@@ -186,12 +192,23 @@ describe("AppRouter", () => {
 
   it("sends an unauthenticated visitor from the keeps back to the name gate", async () => {
     window.history.replaceState(null, "", APP_PATHNAMES.staffKeep);
+    const votingApiClient = createVotingApiClientMock();
 
-    render(<AppRouter votingApiClient={createVotingApiClientMock()} />);
+    render(<AppRouter votingApiClient={votingApiClient} />);
 
     expect(
       await screen.findByRole("heading", { name: "Name the champion" }),
     ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Games ledger" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Sealed ballot results" }),
+    ).not.toBeInTheDocument();
+    expect(
+      votingApiClient.fetchLockedBallotResultsForStaff,
+    ).not.toHaveBeenCalled();
+    expect(votingApiClient.importGamesFromCsvText).not.toHaveBeenCalled();
     await waitFor(() => {
       expect(window.location.pathname).toBe(APP_PATHNAMES.nameGate);
     });
@@ -205,12 +222,27 @@ describe("AppRouter", () => {
       isStaff: false,
     });
     window.history.replaceState(null, "", APP_PATHNAMES.staffKeep);
+    const votingApiClient = createVotingApiClientMock();
 
-    render(<AppRouter votingApiClient={createVotingApiClientMock()} />);
+    render(<AppRouter votingApiClient={votingApiClient} />);
 
     expect(
       await screen.findByRole("heading", { name: "Champion's keep" }),
     ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Staff keep" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Games ledger" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Sealed ballot results" }),
+    ).not.toBeInTheDocument();
+    expect(
+      votingApiClient.fetchLockedBallotResultsForStaff,
+    ).not.toHaveBeenCalled();
+    expect(votingApiClient.importGamesFromCsvText).not.toHaveBeenCalled();
+    expect(votingApiClient.importVoterRosterFromCsvText).not.toHaveBeenCalled();
     await waitFor(() => {
       expect(window.location.pathname).toBe(APP_PATHNAMES.voterKeep);
     });

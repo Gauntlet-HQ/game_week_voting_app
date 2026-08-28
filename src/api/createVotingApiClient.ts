@@ -2,11 +2,17 @@ import { isPlainRecord } from "../isPlainRecord";
 import { VotingApiRequestFailedError } from "./VotingApiRequestFailedError";
 import {
   isGameListedOnTheBallot,
+  isGamesCsvImportSummary,
   isHonorSystemSession,
+  isStaffLockedBallotResults,
   isVoterBallot,
+  isVoterRosterCsvImportSummary,
   type GameListedOnTheBallot,
+  type GamesCsvImportSummary,
   type HonorSystemSession,
+  type StaffLockedBallotResults,
   type VoterBallot,
+  type VoterRosterCsvImportSummary,
   type VotingApiClient,
 } from "./votingApiTypes";
 
@@ -118,6 +124,56 @@ export function createVotingApiClient(input: {
       });
 
       return readVoterBallotFromResponse(responseBody);
+    },
+    importGamesFromCsvText: async ({ sessionToken, csvText }) => {
+      const responseBody = await fetchJsonFromVotingApi({
+        fetchImplementation: input.fetchImplementation,
+        requestUrl: `${apiBaseUrl}/staff/games/import`,
+        requestInit: {
+          method: "POST",
+          headers: {
+            "Content-Type": "text/csv",
+          },
+          body: csvText,
+        },
+        sessionToken,
+        unreachableHallsMessage:
+          "The games ledger could not be inscribed. The halls are unreachable.",
+      });
+
+      return readGamesCsvImportSummaryFromResponse(responseBody);
+    },
+    importVoterRosterFromCsvText: async ({ sessionToken, csvText }) => {
+      const responseBody = await fetchJsonFromVotingApi({
+        fetchImplementation: input.fetchImplementation,
+        requestUrl: `${apiBaseUrl}/staff/voters/import`,
+        requestInit: {
+          method: "POST",
+          headers: {
+            "Content-Type": "text/csv",
+          },
+          body: csvText,
+        },
+        sessionToken,
+        unreachableHallsMessage:
+          "The roster ledger could not be inscribed. The halls are unreachable.",
+      });
+
+      return readVoterRosterCsvImportSummaryFromResponse(responseBody);
+    },
+    fetchLockedBallotResultsForStaff: async ({ sessionToken }) => {
+      const responseBody = await fetchJsonFromVotingApi({
+        fetchImplementation: input.fetchImplementation,
+        requestUrl: `${apiBaseUrl}/staff/results`,
+        requestInit: {
+          method: "GET",
+        },
+        sessionToken,
+        unreachableHallsMessage:
+          "The sealed results could not be summoned. The halls are unreachable.",
+      });
+
+      return readStaffLockedBallotResultsFromResponse(responseBody);
     },
   };
 }
@@ -248,6 +304,45 @@ function readVoterBallotFromResponse(responseBody: unknown): VoterBallot {
     throw new VotingApiRequestFailedError({
       failureKind: "http",
       message: "The halls returned an unreadable ballot.",
+    });
+  }
+
+  return responseBody;
+}
+
+function readGamesCsvImportSummaryFromResponse(
+  responseBody: unknown,
+): GamesCsvImportSummary {
+  if (!isGamesCsvImportSummary(responseBody)) {
+    throw new VotingApiRequestFailedError({
+      failureKind: "http",
+      message: "The halls returned an unreadable games ledger summary.",
+    });
+  }
+
+  return responseBody;
+}
+
+function readVoterRosterCsvImportSummaryFromResponse(
+  responseBody: unknown,
+): VoterRosterCsvImportSummary {
+  if (!isVoterRosterCsvImportSummary(responseBody)) {
+    throw new VotingApiRequestFailedError({
+      failureKind: "http",
+      message: "The halls returned an unreadable roster ledger summary.",
+    });
+  }
+
+  return responseBody;
+}
+
+function readStaffLockedBallotResultsFromResponse(
+  responseBody: unknown,
+): StaffLockedBallotResults {
+  if (!isStaffLockedBallotResults(responseBody)) {
+    throw new VotingApiRequestFailedError({
+      failureKind: "http",
+      message: "The halls returned unreadable sealed results.",
     });
   }
 

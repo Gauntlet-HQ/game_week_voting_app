@@ -1,6 +1,11 @@
 import { vi } from "vitest";
 import type { VotingApiClient } from "../api/votingApiTypes";
 import {
+  staffLockedBallotResults,
+  successfulGamesCsvImportSummary,
+  successfulVoterRosterCsvImportSummary,
+} from "./staffKeepTestFixtures";
+import {
   emptyUnlockedVoterBallot,
   fourGamesOnTheBallot,
   sealedVoterBallot,
@@ -32,6 +37,13 @@ export function createVotingApiClientMock(
       votes,
     })),
     lockCompletedBallotForCurrentVoter: vi.fn(async () => sealedVoterBallot),
+    importGamesFromCsvText: vi.fn(async () => successfulGamesCsvImportSummary),
+    importVoterRosterFromCsvText: vi.fn(
+      async () => successfulVoterRosterCsvImportSummary,
+    ),
+    fetchLockedBallotResultsForStaff: vi.fn(
+      async () => staffLockedBallotResults,
+    ),
     ...overrides,
   };
 }
