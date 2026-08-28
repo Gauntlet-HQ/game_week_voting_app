@@ -2,6 +2,12 @@
 
 Staff upload game submissions by CSV. Voters pick a name from a roster (honor system), choose one winner per category, then lock in. Staff share one password for upload and results. Fantasy MMO theme. Hosted on Railway.
 
+## Layout
+
+- Repo root — Vite fantasy design system and primitive gallery
+- `backend/` — TypeScript Fastify + Postgres API
+- `backend/migrations/001_award_voting_schema.sql` — locked schema (tables, RESTRICT FKs, lock/vote triggers). Reviewed on the API PR; there is no separate migrations branch.
+
 ## Status
 
 This iteration ships the fantasy design system and a gallery of primitives. Name-gate, voting board, staff CSV upload, and Railway hosting are not included yet.
@@ -15,8 +21,143 @@ npm run dev
 
 Vite prints a local URL (default `http://localhost:5173`). The home page is the primitive gallery: tokens, parchment, gold buttons, stone fields, and character-select portraits.
 
-## Tests
+## Frontend tests
 
 ```bash
 npm test
 ```
+
+## Backend
+
+The API lives in `backend`. Categories are the Postgres enum `award_category`:
+
+- `technical_achievement`
+- `creative_or_fun_gameplay`
+- `visuals_or_graphics`
+- `best_overall`
+
+Regular voters pick a roster name with no password. Staff names use **one shared staff password** (hashed in `staff_credentials`). A wrong password never grants staff and never reveals whether the name is marked staff. Session tokens encode `voter_id` + `isStaff`.
+
+### Environment
+
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `DATABASE_URL` | yes | Postgres connection string |
+| `STAFF_PASSWORD` | on first boot (and in production) | Hashed into `staff_credentials` **only if that table is empty** |
+| `SESSION_SECRET` | production | HMAC secret for session tokens |
+| `PORT` | no (default `3000`) | Listen port |
+| `HOST` | no (default `0.0.0.0`) | Listen host |
+
+Copy `backend/.env.example` and export the values (or put them in the shell / Railway service):
+
+```bash
+export DATABASE_URL=postgresql://voting:voting@127.0.0.1:5432/voting_dev
+export STAFF_PASSWORD=change-me-shared-staff-password
+export SESSION_SECRET=change-me-to-a-long-random-string
+```
+
+Tests do **not** use Railway. They try local Postgres (`TEST_DATABASE_URL`, default `postgresql://voting:voting@127.0.0.1:5432/voting_test`) and fall back to Testcontainers.
+
+### Run locally
+
+```bash
+cd backend
+npm install
+npm run migrate
+npm run dev
+```
+
+Production start after `npm run build`:
+
+```bash
+cd backend
+npm start
+```
+
+Interactive OpenAPI UI: `http://localhost:3000/docs`. Checked-in spec: `backend/openapi.json`.
+
+### Curl examples
+
+Roster names (public):
+
+```bash
+curl -s http://localhost:3000/voters
+```
+
+Honor-system session (regular voter):
+
+```bash
+curl -s -X POST http://localhost:3000/sessions \
+  -H 'content-type: application/json' \
+  -d '{"displayName":"Ada Lovelace"}'
+```
+
+Staff session (shared password):
+
+```bash
+TOKEN=$(curl -s -X POST http://localhost:3000/sessions \
+  -H 'content-type: application/json' \
+  -d '{"displayName":"Staff Sage","staffPassword":"change-me-shared-staff-password"}' \
+  | jq -r .token)
+```
+
+Import games CSV (upsert by `url`; missing + zero votes → delete; missing + has votes → `withdrawn_from_ballot`):
+
+```bash
+curl -s -X POST http://localhost:3000/staff/games/import \
+  -H "authorization: Bearer $TOKEN" \
+  -H 'content-type: text/csv' \
+  --data-binary @games.csv
+```
+
+`games.csv`:
+
+```csv
+title,submitter_name,url
+Dungeon Crawler,Ada Lovelace,https://example.com/dungeon
+```
+
+Import voter roster (upsert by `lower(display_name)`; missing + no ballot → delete; missing + has ballot → keep):
+
+```bash
+curl -s -X POST http://localhost:3000/staff/voters/import \
+  -H "authorization: Bearer $TOKEN" \
+  -H 'content-type: text/csv' \
+  --data-binary @voters.csv
+```
+
+`voters.csv`:
+
+```csv
+display_name,is_staff
+Ada Lovelace,false
+Staff Sage,true
+```
+
+Vote and lock:
+
+```bash
+curl -s http://localhost:3000/games -H "authorization: Bearer $TOKEN"
+curl -s http://localhost:3000/ballot -H "authorization: Bearer $TOKEN"
+curl -s -X PUT http://localhost:3000/ballot \
+  -H "authorization: Bearer $TOKEN" \
+  -H 'content-type: application/json' \
+  -d '{"votes":[{"category":"technical_achievement","gameId":"<uuid>"},{"category":"creative_or_fun_gameplay","gameId":"<uuid>"},{"category":"visuals_or_graphics","gameId":"<uuid>"},{"category":"best_overall","gameId":"<uuid>"}]}'
+curl -s -X POST http://localhost:3000/ballot/lock \
+  -H "authorization: Bearer $TOKEN"
+```
+
+Locked-ballot results (ties share a rank):
+
+```bash
+curl -s http://localhost:3000/staff/results -H "authorization: Bearer $TOKEN"
+```
+
+### Backend tests
+
+```bash
+cd backend
+npm test
+```
+
+Needs local Postgres (see `TEST_DATABASE_URL`) or Docker for Testcontainers. The suite starts from failing-rule coverage: name gate + unique `(voter_id, category)`, lock immutability, CSV rules, `ON DELETE RESTRICT`, and results that ignore draft ballots.

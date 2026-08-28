@@ -23,6 +23,11 @@ dist-ssr
 *.sln
 *.sw?
 
+# Env
+.env
+.env.local
+
 # Test / coverage
 coverage
 *.tsbuildinfo
+backend/.tmp-postgres/

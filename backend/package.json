@@ -1,0 +1,38 @@
+{
+  "name": "game-week-voting-api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "TypeScript Fastify API for the Game Week Voting app",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "start": "node dist/server.js",
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "migrate": "tsx src/database/run-migrate.ts",
+    "openapi:write": "tsx src/openapi/write-checked-in-openapi-document.ts"
+  },
+  "dependencies": {
+    "@fastify/cors": "^11.1.0",
+    "@fastify/swagger": "^9.5.1",
+    "@fastify/swagger-ui": "^5.2.3",
+    "bcryptjs": "^3.0.2",
+    "csv-parse": "^6.1.0",
+    "fastify": "^5.6.0",
+    "pg": "^8.16.3",
+    "zod": "^4.1.5"
+  },
+  "devDependencies": {
+    "@testcontainers/postgresql": "^11.5.1",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^24.3.0",
+    "@types/pg": "^8.15.5",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  }
+}
