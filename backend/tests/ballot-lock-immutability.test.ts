@@ -62,6 +62,41 @@ describe("ballot lock immutability", () => {
     ).rejects.toThrow(/cannot lock a ballot without all four award categories/);
   });
 
+  it("rejects a raw SQL ballot lock when any vote points at a withdrawn game", async () => {
+    const voter = await insertVoter(pool, { displayName: "Ada Lovelace" });
+    const activeGame = await insertGame(pool, {
+      title: "Dungeon Crawler",
+      submitterName: "Ada",
+      url: "https://example.com/dungeon"
+    });
+    const withdrawnGame = await insertGame(pool, {
+      title: "Withdrawn Game",
+      submitterName: "Grace",
+      url: "https://example.com/withdrawn",
+      withdrawnFromBallot: true
+    });
+    const ballotId = await insertCompleteDraftBallot(pool, {
+      voterId: voter.voterId,
+      gameIds: [
+        activeGame.gameId,
+        withdrawnGame.gameId,
+        activeGame.gameId,
+        activeGame.gameId
+      ]
+    });
+
+    await expect(
+      pool.query(
+        `
+          UPDATE ballots
+          SET is_locked = TRUE, locked_at = now()
+          WHERE ballot_id = $1
+        `,
+        [ballotId]
+      )
+    ).rejects.toThrow(/cannot lock a ballot that includes a withdrawn game/);
+  });
+
   it("rejects unlocking a locked ballot", async () => {
     const voter = await insertVoter(pool, { displayName: "Ada Lovelace" });
     const game = await insertGame(pool, {

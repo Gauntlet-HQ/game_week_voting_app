@@ -41,6 +41,10 @@ describe("locked schema migration DDL", () => {
     expect(sql).toContain("'best_overall'");
     expect(sql).toContain("votes_reject_voter_mismatch");
     expect(sql).toContain("ballots_reject_lock_without_all_categories");
+    expect(sql).toContain("withdrawn_from_ballot = TRUE");
+    expect(sql).toMatch(
+      /EXISTS\s*\(\s*SELECT 1\s*FROM votes\s*INNER JOIN games ON games\.game_id = votes\.game_id/s
+    );
     expect(sql).toContain("ballots_reject_unlock");
     expect(sql).toContain("votes_freeze_after_ballot_lock");
   });

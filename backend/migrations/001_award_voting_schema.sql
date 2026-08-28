@@ -115,7 +115,7 @@ CREATE TRIGGER votes_reject_voter_mismatch
   FOR EACH ROW
   EXECUTE FUNCTION reject_vote_when_voter_does_not_match_ballot();
 
--- Trigger: reject lock without all four categories present
+-- Trigger: reject lock without all four categories present, or if any pick is withdrawn
 CREATE OR REPLACE FUNCTION reject_ballot_lock_without_all_four_categories()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -147,6 +147,17 @@ BEGIN
 
     IF present_category_count <> 4 OR missing_category_count <> 0 THEN
       RAISE EXCEPTION 'cannot lock a ballot without all four award categories'
+        USING ERRCODE = '23514';
+    END IF;
+
+    IF EXISTS (
+      SELECT 1
+      FROM votes
+      INNER JOIN games ON games.game_id = votes.game_id
+      WHERE votes.ballot_id = NEW.ballot_id
+        AND games.withdrawn_from_ballot = TRUE
+    ) THEN
+      RAISE EXCEPTION 'cannot lock a ballot that includes a withdrawn game'
         USING ERRCODE = '23514';
     END IF;
   END IF;
